@@ -22,7 +22,8 @@
         "num_stimuli": 2,
         "stimuli_shapes": ["square", "square"],
         "stimuli_frequencies": [15, 10],
-        "stimuli_position": [[-7, 0], [7,0 ]],
+        "stimuli_angles": [45, 225],
+        "stimuli_distances": [2, 4],
         "stimuli_size": [[2, 2], [2, 2]],
         "stimuli_colours": ["red", "green"]
     }

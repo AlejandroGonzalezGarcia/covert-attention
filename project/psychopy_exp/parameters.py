@@ -32,7 +32,8 @@ class StimulusConfig:
     num_stimuli: int
     stimuli_shapes: List[str]
     stimuli_frequencies: List[int]
-    stimuli_position: List[List[int]]
+    stimuli_angles: List[int]
+    stimuli_distances: List[int]
     stimuli_size: List[List[int]]
     stimuli_colours: List[List[str]]
 

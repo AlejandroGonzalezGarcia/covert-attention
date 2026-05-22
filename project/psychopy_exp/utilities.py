@@ -43,7 +43,8 @@ def create_fixation(win, targets, direction_to_look, location=[0,0], attention=N
             #     if attention == "overt":
             #         location = target_of_interest.position
             # print(f"location of fixation: {location}")
-            print(f"Creating fixation on the {direction_to_look}")
+            if attention=="covert":
+                print(f"Creating fixation in the centre")
             for target in targets:
                 if (direction_to_look == "left" and target.position[0] < 0) or (direction_to_look == "right" and target.position[0] > 0): # direction to look left and target also on left
                     target_of_interest = target

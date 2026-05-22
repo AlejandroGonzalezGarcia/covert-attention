@@ -338,52 +338,6 @@ attention to the target on the {self.direction} of the screen"
     # self, target_list, locations, refresh_rate, duration, offline=False, attention=None, cue_colour=None
     
     @staticmethod
-    # def create_offline_trials(num_offline_trials, offline_trial_duration, shapes, sizes, freqs, positions, colours, refresh_hz, win=None, attention=None):
-    #     """"
-    #     creates list of offline trials which must be of fixed duration
-    #     """
-    #     # list of trials
-    #     offline_trial_list = []
-
-    #     conditions = []
-    #     for colour_perm in itertools.permutations(colours):
-    #         for freq_perm in itertools.permutations(freqs):
-    #             condition = list(zip(positions, colour_perm, freq_perm))
-    #             conditions.append(condition)
-
-    #     dummy_list = []
-    #     for condition_idx, condition in enumerate(conditions):
-    #         # create one rep per number of reps in parameters
-    #         for rep in range(num_offline_trials):
-    #             # make cue one different colour for each rep (rep x num of colours)
-    #             for cue_colour in colours:
-    #                 dummy_list.append({
-    #                     "condition": condition,
-    #                     "cue_colour": cue_colour
-    #                 })
-        
-    #     print("creating trial")
-    #     for i, trial in enumerate(dummy_list):
-    #         print(f"Trial {i + 1}")
-    #         cue_colour = trial['cue_colour']
-    #         target_list = []
-    #         targets = trial['condition']
-    #         # print(targets)
-    #         # print(cue_colour)
-    #         for j, target in enumerate(targets):
-    #             position, colour, freq = target[0], target[1], target[2]
-    #             target_list.append(Target(shapes[j], sizes[j], colour, freq, refresh_hz, win, position))
-
-    #         offline_trial_list.append(Trial(target_list, 
-    #                                         refresh_hz, 
-    #                                         offline_trial_duration, 
-    #                                         offline=True, 
-    #                                         attention=attention,
-    #                                         cue_colour=cue_colour))
-    #         print("=======================\n")
-    #     print(len(offline_trial_list))
-    #     random.shuffle(offline_trial_list)
-    #     return offline_trial_list
     def create_offline_trials(
     num_offline_trials,
     offline_trial_duration,
@@ -394,6 +348,8 @@ attention to the target on the {self.direction} of the screen"
     angles,
     radial_distances,
     refresh_hz,
+    win=None,
+    attention=None,
     shuffle=True
     ):
         """
@@ -409,30 +365,29 @@ attention to the target on the {self.direction} of the screen"
         offline_trial_list = []
 
         sides = ["left", "right"]
-        position_sets = generate_position_sets(angles, radial_distances)
+        side_to_idx = {
+            "left": 0,
+            "right": 1
+        }
+
+        if len(shapes) != 2:
+            raise ValueError("shapes should have length 2: [left_shape, right_shape].")
+
+        if len(sizes) != 2:
+            raise ValueError("sizes should have length 2: [left_size, right_size].")
 
         if len(colours) != 2:
-            raise ValueError("This side-based design assumes exactly 2 colours: one per side.")
+            raise ValueError("colours should have length 2: one colour per side.")
 
         if len(freqs) != 2:
-            raise ValueError("This side-based design assumes exactly 2 frequencies: one per side.")
+            raise ValueError("freqs should have length 2: one frequency per side.")
+
+        position_sets = generate_position_sets(angles, radial_distances)
 
         for position_info in position_sets:
             radius = position_info["radius"]
             positions = position_info["positions"]
             angles_for_set = position_info["angles"]
-
-            n_targets = len(positions)
-
-            if len(shapes) != n_targets:
-                raise ValueError(
-                    f"Number of shapes ({len(shapes)}) must match number of targets ({n_targets})."
-                )
-
-            if len(sizes) != n_targets:
-                raise ValueError(
-                    f"Number of sizes ({len(sizes)}) must match number of targets ({n_targets})."
-                )
 
             for colour_perm in itertools.permutations(colours):
                 for freq_perm in itertools.permutations(freqs):
@@ -442,24 +397,29 @@ attention to the target on the {self.direction} of the screen"
                     for side_idx, side in enumerate(sides):
                         side_assignment[side] = {
                             "colour": colour_perm[side_idx],
-                            "frequency": freq_perm[side_idx]
+                            "frequency": freq_perm[side_idx],
+                            "shape": shapes[side_idx],
+                            "size": sizes[side_idx]
                         }
 
                     condition = []
 
-                    for target_idx, position in enumerate(positions):
+                    for stim_idx, position in enumerate(positions):
                         side = get_side_from_position(position)
+                        side_idx = side_to_idx[side]
 
                         target_info = {
-                            "target_idx": target_idx,
-                            "position": position,
-                            "angle": angles_for_set[target_idx],
-                            "radius": radius,
+                            "stim_idx": stim_idx,
                             "side": side,
-                            "shape": shapes[target_idx],
-                            "size": sizes[target_idx],
+                            "position": position,
+                            "angle": angles_for_set[stim_idx],
+                            "radius": radius,
+
+                            # inherited from side-level assignment
                             "colour": side_assignment[side]["colour"],
-                            "frequency": side_assignment[side]["frequency"]
+                            "frequency": side_assignment[side]["frequency"],
+                            "shape": shapes[side_idx],
+                            "size": sizes[side_idx]
                         }
 
                         condition.append(target_info)
@@ -480,7 +440,33 @@ attention to the target on the {self.direction} of the screen"
         if shuffle:
             random.shuffle(offline_trial_list)
 
-        return offline_trial_list
+        print(f"Total number of trials: {len(offline_trial_list)}")
+        final_list = []
+        for trial in offline_trial_list:
+            cue_colour=trial['cue_colour']
+            target_list = []
+            for target in trial['condition']:
+                target_list.append(Target(
+                    shape=target['shape'],
+                    size=target['size'],
+                    colour=target['colour'],
+                    freq=target['frequency'],
+                    refresh_hz=refresh_hz,
+                    win=win,
+                    position=target['position']
+                ))
+            final_list.append(Trial(
+                target_list=target_list,
+                refresh_rate=refresh_hz,
+                duration=offline_trial_duration,
+                offline=True,
+                attention="covert",
+                cue_colour=trial['cue_colour']
+            ))
+
+        print(f"Total trials: {len(final_list)}")
+        # return offline_trial_list
+        return final_list
 
 
     @staticmethod
@@ -558,52 +544,3 @@ frames per cycle: {target.frames_per_cycle}"
         description += "\n"
 
         print(description)
-
-
-# (num_offline_trials, offline_trial_duration, shapes, sizes, freqs, positions, colours, refresh_hz, win=None, attention=None)
-# num_offline_trials = 1
-# offline_trial_duration = 5
-# shapes = ["square", "square"]
-# stimuli_frequencies = [15, 10]
-# stimuli_positions = [[-7, 0], [7,0 ]]
-# stimuli_sizes = [[2, 2], [2, 2]]
-# stimnuli_colours = ["red", "green"]
-# refresh_hz = 60
-
-# "num_stimuli": 2,
-# "stimuli_shapes": ["square", "square"],
-# "stimuli_frequencies": [15, 10],
-# "stimuli_position": [[-7, 0], [7,0 ]],
-# "stimuli_size": [[2, 2], [2, 2]],
-# "stimuli_colours": ["red", "green"]
-
-# Trial.create_offline_trials(num_offline_trials, offline_trial_duration, shapes, stimuli_sizes, stimuli_frequencies, stimuli_positions, stimnuli_colours, refresh_hz)
-
-num_offline_trials = 1
-offline_trial_duration = 2
-
-shapes = ["square", "square"]
-sizes = [[2, 2], [2, 2]]
-
-freqs = [15, 10]
-colours = ["red", "green"]
-
-angles = [45, 225]  # left, right
-radial_distances = [1,2,3]
-
-refresh_hz = 60
-
-trials = Trial.create_offline_trials(
-    num_offline_trials=num_offline_trials,
-    offline_trial_duration=offline_trial_duration,
-    shapes=shapes,
-    sizes=sizes,
-    freqs=freqs,
-    colours=colours,
-    angles=angles,
-    radial_distances=radial_distances,
-    refresh_hz=refresh_hz
-)
-
-print(len(trials))
-print(trials[0])

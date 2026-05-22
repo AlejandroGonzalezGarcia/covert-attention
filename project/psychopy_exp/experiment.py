@@ -54,46 +54,73 @@ def run_experiment(stop_event=None,
     intro_text = "Welcome!"
     display_message(win, intro_text)
 
-    # ---- create offline trials
-    offline_trials = Trial.create_offline_trials(
-        params.ssvep.num_offline_trials,
-        params.ssvep.offline_trial_duration,
-        params.stimulus.stimuli_shapes,
-        params.stimulus.stimuli_size,
-        params.stimulus.stimuli_frequencies, 
-        params.stimulus.stimuli_position,
-        params.stimulus.stimuli_colours,
-        params.monitor.refresh_rate, 
-        win,
-        attention="overt"
-    )
+    # # ---- create offline trials
+    # offline_trials = Trial.create_offline_trials(
+    #     params.ssvep.num_offline_trials,
+    #     params.ssvep.offline_trial_duration,
+    #     params.stimulus.stimuli_shapes,
+    #     params.stimulus.stimuli_size,
+    #     params.stimulus.stimuli_frequencies, 
+    #     params.stimulus.stimuli_position,
+    #     params.stimulus.stimuli_colours,
+    #     params.monitor.refresh_rate, 
+    #     win,
+    #     attention="overt"
+    # )
 
-    # ---- offline trials message
-    display_message_key_required(win,
-                    "Press any key to begin the series of offline overt attention trials")
+    # # ---- offline trials message
+    # display_message_key_required(win,
+    #                 "Press any key to begin the series of offline overt attention trials")
 
-    # ---- run offline covert trials
-    Trial.run_offline_trials(
-        offline_trials,
-        win,
-        marker_queue=marker_queue,
-        offline_queue=offline_queue,
-        attention="overt"
-        )
+    # # ---- run offline covert trials
+    # Trial.run_offline_trials(
+    #     offline_trials,
+    #     win,
+    #     marker_queue=marker_queue,
+    #     offline_queue=offline_queue,
+    #     attention="overt"
+    #     )
     
     # ---- create offline covert trials
+    # offline_covert_trials = Trial.create_offline_trials(
+    #     params.ssvep.num_offline_trials,
+    #     params.ssvep.offline_trial_duration,
+    #     params.stimulus.stimuli_shapes,
+    #     params.stimulus.stimuli_size,
+    #     params.stimulus.stimuli_frequencies, 
+    #     params.stimulus.stimuli_position,
+    #     params.stimulus.stimuli_colours,
+    #     params.monitor.refresh_rate, 
+    #     win,
+    #     attention="covert"
+    # )
+
+    num_offline_trials = 1
+    offline_trial_duration = 5.0
+    shapes = ["square", "square"]
+    sizes = [[2, 2], [2, 2]]
+
+    freqs = [15, 10]
+    colours = ["red", "green"]
+
+    angles = [45, 135, 225, 315]  # left, right
+    radial_distances = [2]
+
+    refresh_hz = 60
+
     offline_covert_trials = Trial.create_offline_trials(
         params.ssvep.num_offline_trials,
         params.ssvep.offline_trial_duration,
         params.stimulus.stimuli_shapes,
         params.stimulus.stimuli_size,
-        params.stimulus.stimuli_frequencies, 
-        params.stimulus.stimuli_position,
+        params.stimulus.stimuli_frequencies,
         params.stimulus.stimuli_colours,
-        params.monitor.refresh_rate, 
-        win,
-        attention="covert"
-    )
+        params.stimulus.stimuli_angles,
+        params.stimulus.stimuli_distances,
+        params.monitor.refresh_rate,
+        win=win,
+        attention="covert",
+        shuffle=True)
 
     # ---- message for covert attention trials
     display_message_key_required(win,
